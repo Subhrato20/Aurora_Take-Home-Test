@@ -40,12 +40,13 @@ COPY --from=frontend-builder /app/frontend/dist /app/src/frontend/dist
 # Create data directory for cache
 RUN mkdir -p /app/data
 
-# Expose port
+# Expose port (will be set by PORT env var at runtime)
 EXPOSE 8000
 
 # Set Python path
 ENV PYTHONPATH=/app
 
-# Run the application
-CMD ["uvicorn", "src.backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run the application (use PORT env var if set, default to 8000)
+# Use shell form to allow environment variable expansion
+CMD ["sh", "-c", "uvicorn src.backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
 

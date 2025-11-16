@@ -5,8 +5,8 @@ Configure OPENAI_API_KEY, NOVEMBER_API_BASE, and related settings via environmen
 """
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
-
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -72,6 +72,10 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="November Q&A Service", lifespan=lifespan)
 
+# Log startup info
+logger.info(f"🚀 Starting server on port {os.getenv('PORT', '8000')}")
+logger.info(f"Python path: {os.getenv('PYTHONPATH', 'not set')}")
+
 # Add CORS middleware - allow all origins for production
 app.add_middleware(
     CORSMiddleware,
@@ -111,7 +115,10 @@ async def ask(request: AskRequest) -> AskResponse:
 
 # Serve static files from frontend dist directory (must be after API routes)
 frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
+logger.info(f"Looking for frontend at: {frontend_dist}")
+logger.info(f"Frontend exists: {frontend_dist.exists()}")
 if frontend_dist.exists():
+    logger.info(f"✅ Frontend found! Serving from {frontend_dist}")
     # Mount static assets (JS, CSS, etc.)
     assets_dir = frontend_dist / "assets"
     if assets_dir.exists():
