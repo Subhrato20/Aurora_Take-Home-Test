@@ -2,13 +2,14 @@ import { useState } from "react";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 import { askQuestion, type AskResponse } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Bot, Code2, Copy, Check } from "lucide-react";
+import { X, Bot, Code2, Copy, Check, Search, Loader2 } from "lucide-react";
 
 const DemoOne = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<AskResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState("Searching through messages...");
 
   const handleSend = async (message: string, files?: File[]) => {
     console.log('Message:', message);
@@ -17,6 +18,19 @@ const DemoOne = () => {
     setIsLoading(true);
     setResponse(null);
     setError(null);
+    
+    // Rotate through loading messages
+    const messages = [
+      "Searching through messages...",
+      "Analyzing data...",
+      "Finding the answer...",
+      "Almost there...",
+    ];
+    let messageIndex = 0;
+    const messageInterval = setInterval(() => {
+      messageIndex = (messageIndex + 1) % messages.length;
+      setLoadingMessage(messages[messageIndex]);
+    }, 2000);
     
     try {
       // Extract the actual question (remove prefixes like [Search: ...])
@@ -30,6 +44,7 @@ const DemoOne = () => {
       setError(errorMessage);
       console.error('Error:', err);
     } finally {
+      clearInterval(messageInterval);
       setIsLoading(false);
     }
   };
@@ -58,6 +73,51 @@ const DemoOne = () => {
           onSend={handleSend} 
           isLoading={isLoading}
         />
+        
+        {/* Loading Animation */}
+        <AnimatePresence>
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="relative rounded-2xl p-4 bg-white/10 border border-white/20 text-white backdrop-blur-sm"
+            >
+              <div className="flex items-center gap-3">
+                <div className="relative">
+                  <Search className="h-5 w-5 animate-pulse" />
+                  <motion.div
+                    className="absolute inset-0"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Loader2 className="h-5 w-5 text-purple-300 opacity-50" />
+                  </motion.div>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium mb-1">{loadingMessage}</p>
+                  <div className="flex gap-1">
+                    {[0, 1, 2].map((i) => (
+                      <motion.div
+                        key={i}
+                        className="h-1.5 w-1.5 rounded-full bg-white/60"
+                        animate={{
+                          scale: [1, 1.2, 1],
+                          opacity: [0.5, 1, 0.5],
+                        }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          delay: i * 0.2,
+                        }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         
         <AnimatePresence>
           {(response || error) && (

@@ -1,0 +1,40 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: aurora-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
+      - NOVEMBER_API_BASE=${NOVEMBER_API_BASE:-https://november7-730026606190.europe-west1.run.app}
+      - PAGE_SIZE=${PAGE_SIZE:-100}
+      - MAX_VALIDATOR_MESSAGES=${MAX_VALIDATOR_MESSAGES:-12}
+      - NAME_RESOLVER_MAX_NAMES=${NAME_RESOLVER_MAX_NAMES:-50}
+      - MESSAGE_CACHE_PATH=/app/data/messages_cache.json
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8000}
+    container_name: aurora-frontend
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
