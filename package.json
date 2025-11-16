@@ -5,8 +5,6 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "scripts": {
-    "build": "cd src/frontend && npm ci && npm run build"
-  }
+  "private": true
 }
 
