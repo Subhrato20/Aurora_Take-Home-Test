@@ -1,3 +1,5 @@
+**Demo Video** -- https://youtube.com/shorts/XHDzgOzeqvI?feature=share
+
 # November Q&A Service
 
 FastAPI application that answers natural-language questions by paging through the November `/messages` API, filtering likely candidates, and asking an OpenAI validator loop to confirm the answer. The service exposes `POST /ask` with body `{"question": "..."}` and responds with the answer plus the supporting message.
