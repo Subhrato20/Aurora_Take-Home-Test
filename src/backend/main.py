@@ -26,6 +26,11 @@ from .validators import LLMNameResolver, LLMValidator
 
 try:
     settings = Settings()
+    
+    # Check if OPENAI_API_KEY is set
+    if not settings.openai_api_key:
+        raise ValueError("OPENAI_API_KEY environment variable is required but not set")
+    
     message_fetcher = MessageFetcher(
         base_url=settings.november_api_base,
         timeout=DEFAULT_HTTP_TIMEOUT,

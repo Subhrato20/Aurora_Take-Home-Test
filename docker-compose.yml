@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: aurora-app
+    # Port mapping - Sevalla may override this
     ports:
       - "8000:8000"
     environment:
@@ -18,9 +19,10 @@ services:
     volumes:
       - ./data:/app/data
     restart: unless-stopped
+    # Simplified health check - Sevalla may override this
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/health')\""]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s

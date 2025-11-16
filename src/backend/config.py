@@ -20,7 +20,7 @@ class Settings(BaseSettings):
         default="https://november7-730026606190.europe-west1.run.app",
         alias="NOVEMBER_API_BASE",
     )
-    openai_api_key: str = Field(..., alias="OPENAI_API_KEY")
+    openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4o-mini", alias="OPENAI_MODEL")
     page_size: int = Field(default=100, alias="PAGE_SIZE", ge=1, le=100)
     max_validator_messages: int = Field(
