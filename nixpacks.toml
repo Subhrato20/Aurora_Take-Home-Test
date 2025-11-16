@@ -1,6 +1,4 @@
-[phases.setup]
-nixPkgs = ["python312", "nodejs-20_x"]
-
+# Nixpacks will auto-detect Python from requirements.txt and Node.js from package.json
 # Build phases - frontend will be built by build.sh script in Procfile
 [phases.install]
 cmds = [
@@ -9,5 +7,4 @@ cmds = [
 ]
 
 # Note: Frontend build happens in build.sh (called from Procfile)
-# This ensures both Python and Node.js are available
 
