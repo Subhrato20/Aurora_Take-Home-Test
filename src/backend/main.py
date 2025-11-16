@@ -24,32 +24,40 @@ from .qa_service import AnswerResult, QAService
 from .schemas import AskRequest, AskResponse
 from .validators import LLMNameResolver, LLMValidator
 
-settings = Settings()
-message_fetcher = MessageFetcher(
-    base_url=settings.november_api_base,
-    timeout=DEFAULT_HTTP_TIMEOUT,
-)
-question_parser = QuestionParser()
-local_cache = LocalCache(settings.cache_path)
-openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
-llm_validator = LLMValidator(
-    client=openai_client,
-    model=settings.openai_model,
-    max_messages=settings.max_validator_messages,
-)
-name_resolver = LLMNameResolver(
-    client=openai_client,
-    model=settings.openai_model,
-    max_names=settings.name_resolver_max_names,
-)
-qa_service = QAService(
-    fetcher=message_fetcher,
-    cache=local_cache,
-    parser=question_parser,
-    validator=llm_validator,
-    name_resolver=name_resolver,
-    page_size=settings.page_size,
-)
+try:
+    settings = Settings()
+    message_fetcher = MessageFetcher(
+        base_url=settings.november_api_base,
+        timeout=DEFAULT_HTTP_TIMEOUT,
+    )
+    question_parser = QuestionParser()
+    local_cache = LocalCache(settings.cache_path)
+    openai_client = AsyncOpenAI(api_key=settings.openai_api_key)
+    llm_validator = LLMValidator(
+        client=openai_client,
+        model=settings.openai_model,
+        max_messages=settings.max_validator_messages,
+    )
+    name_resolver = LLMNameResolver(
+        client=openai_client,
+        model=settings.openai_model,
+        max_names=settings.name_resolver_max_names,
+    )
+    qa_service = QAService(
+        fetcher=message_fetcher,
+        cache=local_cache,
+        parser=question_parser,
+        validator=llm_validator,
+        name_resolver=name_resolver,
+        page_size=settings.page_size,
+    )
+    logger.info("✅ All services initialized successfully")
+except Exception as e:
+    logger.exception("❌ Failed to initialize services: %s", e)
+    # Set to None so we can check later
+    qa_service = None
+    settings = None
+    message_fetcher = None
 
 
 @asynccontextmanager
@@ -58,7 +66,8 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        await message_fetcher.aclose()
+        if message_fetcher is not None:
+            await message_fetcher.aclose()
 
 
 app = FastAPI(title="November Q&A Service", lifespan=lifespan)
@@ -82,6 +91,11 @@ async def health():
 @app.post("/ask", response_model=AskResponse)
 async def ask(request: AskRequest) -> AskResponse:
     """Answer the provided question via the QAService."""
+    if qa_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Service not initialized. Check server logs and ensure OPENAI_API_KEY is set.",
+        )
     try:
         result: AnswerResult = await qa_service.answer_question(request.question)
     except HTTPException:
