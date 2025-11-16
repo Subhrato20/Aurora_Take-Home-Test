@@ -46,7 +46,10 @@ EXPOSE 8000
 # Set Python path
 ENV PYTHONPATH=/app
 
+# Copy startup script
+COPY start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
 # Run the application (use PORT env var if set, default to 8000)
-# Use shell form to allow environment variable expansion
-CMD ["sh", "-c", "uvicorn src.backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["/app/start.sh"]
 
