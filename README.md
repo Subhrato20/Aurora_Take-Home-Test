@@ -70,11 +70,136 @@ The system consists of:
 
 ## Running Locally
 
+### Option 1: Without Docker
+
+#### Prerequisites
+- Python 3.12+ (with virtual environment recommended)
+- Node.js and npm installed
+- OpenAI API key
+
+#### Backend Setup
+
+1. **Install Python dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+   
+   Or using a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On macOS/Linux
+   # or
+   venv\Scripts\activate  # On Windows
+   pip install -r requirements.txt
+   ```
+
+2. **Set environment variables:**
+   ```bash
+   export OPENAI_API_KEY=sk-...
+   # Optional: customize other settings
+   export OPENAI_MODEL=gpt-4o-mini
+   export NOVEMBER_API_BASE=https://november7-730026606190.europe-west1.run.app
+   export PAGE_SIZE=100
+   export MAX_VALIDATOR_MESSAGES=12
+   ```
+
+3. **Start the backend server:**
+   ```bash
+   PYTHONPATH=src uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+   
+   The backend will be available at `http://localhost:8000`
+
+#### Frontend Setup
+
+1. **Navigate to frontend directory:**
+   ```bash
+   cd src/frontend
+   ```
+
+2. **Install dependencies (first time only):**
+   ```bash
+   npm install
+   ```
+
+3. **Start the development server:**
+   ```bash
+   npm run dev
+   ```
+   
+   The frontend will be available at `http://localhost:5173`
+
+#### Using the Application
+
+1. Open `http://localhost:5173` in your browser
+2. Type a question in the input box (e.g., "When is Layla's next trip?")
+3. Press Enter or click the send button
+4. Wait for the AI to process your question and return an answer
+
+### Option 2: With Docker
+
+#### Prerequisites
+- Docker and Docker Compose installed
+- OpenAI API key
+
+#### Quick Start
+
+1. **Set your OpenAI API key:**
+   ```bash
+   export OPENAI_API_KEY=sk-...
+   ```
+
+2. **Start the application:**
+   ```bash
+   docker-compose up --build
+   ```
+   
+   This will:
+   - Build the Docker image
+   - Start the backend service on port 8000
+   - Mount the `./data` directory for message caching
+
+3. **Access the application:**
+   - Backend API: `http://localhost:8000`
+   - Frontend: The frontend is served as part of the Docker container
+
+#### Docker Commands
+
+- **Start in detached mode:**
+   ```bash
+   docker-compose up -d --build
+   ```
+
+- **View logs:**
+   ```bash
+   docker-compose logs -f
+   ```
+
+- **Stop the application:**
+   ```bash
+   docker-compose down
+   ```
+
+- **Rebuild after code changes:**
+   ```bash
+   docker-compose up --build
+   ```
+
+#### Environment Variables
+
+You can customize the Docker setup by setting environment variables:
 ```bash
-pip install -r requirements.txt
 export OPENAI_API_KEY=sk-...
-PYTHONPATH=src uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+export OPENAI_MODEL=gpt-4o-mini
+export NOVEMBER_API_BASE=https://november7-730026606190.europe-west1.run.app
+export PAGE_SIZE=100
+export MAX_VALIDATOR_MESSAGES=12
+docker-compose up --build
 ```
+
+#### Data Persistence
+
+The message cache is stored in `./data/messages_cache.json` and is persisted via Docker volumes, so cached messages will be available across container restarts.
 
 ## Alternative Approaches Considered
 
