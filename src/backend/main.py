@@ -69,6 +69,27 @@ app.add_middleware(
 )
 
 
+@app.get("/")
+async def root():
+    """Root endpoint with API information."""
+    return {
+        "service": "November Q&A Service",
+        "status": "running",
+        "docs": "/docs",
+        "endpoints": {
+            "ask": "/ask (POST)",
+            "docs": "/docs",
+            "health": "/health",
+        },
+    }
+
+
+@app.get("/health")
+async def health():
+    """Health check endpoint."""
+    return {"status": "healthy"}
+
+
 @app.post("/ask", response_model=AskResponse)
 async def ask(request: AskRequest) -> AskResponse:
     """Answer the provided question via the QAService."""
