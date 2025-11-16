@@ -1,0 +1,13 @@
+[phases.setup]
+nixPkgs = ["python312", "nodejs-20_x"]
+
+# Build phases - frontend will be built by build.sh script in Procfile
+[phases.install]
+cmds = [
+  "pip install -r requirements.txt",
+  "cd src/frontend && npm ci"
+]
+
+# Note: Frontend build happens in build.sh (called from Procfile)
+# This ensures both Python and Node.js are available
+

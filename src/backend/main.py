@@ -7,8 +7,12 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
+from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from openai import AsyncOpenAI
 
 from .cache import LocalCache
@@ -59,31 +63,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="November Q&A Service", lifespan=lifespan)
 
-# Add CORS middleware
+# Add CORS middleware - allow all origins for production
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"],
+    allow_origins=["*"],  # Allow all origins since frontend is served from same domain
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-@app.get("/")
-async def root():
-    """Root endpoint with API information."""
-    return {
-        "service": "November Q&A Service",
-        "status": "running",
-        "docs": "/docs",
-        "endpoints": {
-            "ask": "/ask (POST)",
-            "docs": "/docs",
-            "health": "/health",
-        },
-    }
-
-
+# API routes must be defined BEFORE the catch-all frontend route
 @app.get("/health")
 async def health():
     """Health check endpoint."""
@@ -104,6 +93,51 @@ async def ask(request: AskRequest) -> AskResponse:
             detail="Unable to process the question right now.",
         ) from exc
     return AskResponse(answer=result.answer, message=result.message)
+
+
+# Serve static files from frontend dist directory (must be after API routes)
+frontend_dist = Path(__file__).parent.parent.parent / "frontend" / "dist"
+if frontend_dist.exists():
+    # Mount static assets (JS, CSS, etc.)
+    assets_dir = frontend_dist / "assets"
+    if assets_dir.exists():
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+    
+    # Serve vite.svg if it exists
+    vite_svg = frontend_dist / "vite.svg"
+    if vite_svg.exists():
+        @app.get("/vite.svg")
+        async def serve_vite_svg():
+            return FileResponse(vite_svg)
+    
+    # Serve index.html for all non-API routes (SPA routing) - MUST BE LAST
+    # Note: FastAPI matches more specific routes first, so /docs, /openapi.json, /ask (POST) will work
+    @app.get("/{full_path:path}")
+    async def serve_frontend(full_path: str):
+        # Exclude API and documentation paths (these are handled by FastAPI automatically)
+        if full_path in ("docs", "openapi.json", "redoc") or full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not found")
+        # Serve index.html for all other routes (SPA handles client-side routing)
+        index_path = frontend_dist / "index.html"
+        if index_path.exists():
+            return FileResponse(index_path)
+        raise HTTPException(status_code=404, detail="Frontend not built")
+else:
+    # Frontend not built yet, show API info at root
+    @app.get("/")
+    async def root():
+        """Root endpoint with API information."""
+        return {
+            "service": "November Q&A Service",
+            "status": "running",
+            "docs": "/docs",
+            "endpoints": {
+                "ask": "/ask (POST)",
+                "docs": "/docs",
+                "health": "/health",
+            },
+            "note": "Frontend not built. Run 'npm run build' in src/frontend",
+        }
 
 
 # Run with: PYTHONPATH=src uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
