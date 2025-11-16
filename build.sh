@@ -4,12 +4,15 @@
 
 set -e
 
+echo "Node.js version: $(node --version || echo 'Node.js not found')"
+echo "npm version: $(npm --version || echo 'npm not found')"
+
 echo "📦 Building frontend..."
 cd src/frontend
 
-# Install dependencies if node_modules doesn't exist (fallback)
+# Install dependencies (nixpacks should have run npm ci, but ensure it's done)
 if [ ! -d "node_modules" ]; then
-    echo "Installing dependencies..."
+    echo "Installing npm dependencies..."
     npm ci
 fi
 
